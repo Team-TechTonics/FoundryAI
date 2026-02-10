@@ -1,355 +1,45 @@
-# 🚀 FoundryAI - Entrepreneurship OS
+# FoundryAI - Entrepreneurship Operating System
 
-> **India's Largest Entrepreneurship Platform** - Build Your Startup With AI & Co-Founders
+A professional platform combining AI validation, co-founder matching, and strategic guidance for Indian entrepreneurs.
 
-[![Status](https://img.shields.io/badge/Status-Active-success)]()
-[![Tech Stack](https://img.shields.io/badge/Stack-React%20%7C%20Node.js%20%7C%20Express-blue)]()
-[![License](https://img.shields.io/badge/License-MIT-green)]()
+## 🚀 Quick Start
 
----
+### 1. Install Dependencies
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Architecture](#architecture)
-- [API Documentation](#api-documentation)
-- [Screenshots](#screenshots)
-
----
-
-## 🎯 Overview
-
-FoundryAI is a **production-grade platform** designed for India's startup ecosystem, targeting:
-- **10M+ users** within 3 years
-- **100K+ active founders** simultaneously
-- **Sub-200ms** p95 response times across India
-- **99.95%** uptime SLA
-
-### Core Mission
-Empower Indian entrepreneurs with AI-powered tools, intelligent co-founder matching, and a vibrant community to build the next generation of startups.
-
----
-
-## ✨ Features
-
-### 🤖 AI Copilot
-- **YC-Style Mentoring**: AI asks probing questions like Paul Graham
-- **24/7 Availability**: Get strategic advice anytime
-- **Multi-Language**: English & Hindi support
-- **Context-Aware**: Remembers your startup journey
-
-### 🤝 Smart Co-Founder Matching
-- **ML-Powered Algorithm**: 40% skill complementarity weight
-- **Vision Alignment**: Semantic analysis, not just keywords
-- **Work Compatibility**: Risk tolerance & time commitment matching
-- **Social Proof**: Platform reputation & endorsements
-
-### 💡 Idea Validation
-- **Deep AI Analysis**: Market fit, competition, monetization
-- **Actionable Insights**: Get feedback in minutes
-- **Version Tracking**: Track idea evolution
-- **Privacy Controls**: Private, team, or public visibility
-
-### 🎥 Pitch Validation
-- **Video Upload**: Submit your pitch
-- **Community Voting**: Get scored by founders & experts
-- **Weighted Feedback**: Investor votes count 3x more
-- **Anti-Gaming**: Pattern detection prevents abuse
-
-### 🎓 Learning Hub
-- **Duolingo-Style**: Gamified, bite-sized courses
-- **Indian Context**: Tailored for Indian startup ecosystem
-- **Topics**: Validation, MVP, Fundraising, Legal
-- **Progress Tracking**: Achievements & badges
-
-### 🏛️ Ecosystem Access
-- **Legal Help**: Connect with startup lawyers
-- **MVP Builders**: Find development partners
-- **Govt Funding**: Startup India, SISFS access
-- **Mentorship**: Industry experts
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **React 18**: Modern UI with hooks
-- **Vanilla CSS**: Custom design system
-- **Glassmorphism**: Premium dark mode aesthetics
-- **Responsive**: Mobile-first design
-
-### Backend
-- **Node.js**: Fast, scalable JavaScript runtime
-- **Express.js**: Lightweight web framework
-- **In-Memory Store**: Development (PostgreSQL in production)
-- **RESTful API**: Clean, standardized endpoints
-
-### Planned (Production)
-- **Database**: PostgreSQL, MongoDB, Redis, Neo4j
-- **AI/ML**: Claude 3.7 Sonnet, OpenAI, Google
-- **Search**: Elasticsearch
-- **Analytics**: ClickHouse
-- **Queue**: Apache Kafka
-- **CDN**: CloudFlare
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- **Node.js**: v16 or higher
-- **npm**: v7 or higher
-- **Modern Browser**: Chrome, Firefox, Edge, Safari
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/foundry-ai.git
-   cd foundry-ai
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your API keys (optional for demo)
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm start
-   ```
-
-5. **Open your browser**
-   ```
-   Navigate to: http://localhost:3000
-   ```
-
-### Quick Start
 ```bash
-# Clone, install, and run in one go
-git clone https://github.com/yourusername/foundry-ai.git && \
-cd foundry-ai && \
-npm install && \
+npm install
+```
+
+### 2. Set Up Supabase
+
+Follow the detailed guide in **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)**
+
+Quick steps:
+1. Create a Supabase project at [supabase.com](https://supabase.com)
+2. Run `database/schema.sql` in the Supabase SQL Editor
+3. Copy your project URL and anon key
+4. Update `.env` file
+
+### 3. Configure Environment
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your Supabase credentials:
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+### 4. Run the Application
+
+```bash
 npm start
 ```
 
----
-
-## 🏗️ Architecture
-
-### High-Level Overview
-
-```
-┌─────────────────────────────────────────────┐
-│          React Frontend (SPA)               │
-│  Landing | Auth | Dashboard | Features      │
-└─────────────────┬───────────────────────────┘
-                  │ REST API
-┌─────────────────▼───────────────────────────┐
-│         Express.js Backend                  │
-│  Auth | Ideas | AI | Matching | Learning    │
-└─────────────────┬───────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────┐
-│         Data Layer (Development)            │
-│       In-Memory (Production: DBs)           │
-└─────────────────────────────────────────────┘
-```
-
-### Production Architecture
-Refer to `backend.md` for complete production architecture including:
-- Microservices breakdown
-- Database schemas (PostgreSQL, MongoDB, Neo4j)
-- AI orchestration layer
-- Kafka event bus
-- Caching strategy (Redis)
-- Security & compliance
-
----
-
-## 📡 API Documentation
-
-### Base URL
-```
-http://localhost:3000/api
-```
-
-### Authentication
-
-#### POST /auth/signup
-Create a new user account.
-
-**Request:**
-```json
-{
-  "name": "Rahul Sharma",
-  "email": "rahul@startup.com",
-  "password": "securePassword123"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "user": {
-    "id": "123",
-    "name": "Rahul Sharma",
-    "email": "rahul@startup.com",
-    "createdAt": "2026-02-11T00:00:00Z"
-  }
-}
-```
-
-#### POST /auth/login
-Authenticate existing user.
-
-**Request:**
-```json
-{
-  "email": "rahul@startup.com",
-  "password": "securePassword123"
-}
-```
-
-### Ideas
-
-#### POST /ideas
-Submit a new startup idea.
-
-**Request:**
-```json
-{
-  "userId": "123",
-  "title": "AI-powered financial advisor",
-  "problem": "Tier 2/3 cities lack access to quality financial advice",
-  "description": "Mobile app with AI chatbot for personalized investment guidance",
-  "category": "fintech",
-  "stage": "idea"
-}
-```
-
-#### GET /ideas?userId={userId}&stage={stage}
-Get all ideas for a user.
-
-### AI Copilot
-
-#### POST /copilot/chat
-Chat with AI copilot.
-
-**Request:**
-```json
-{
-  "userId": "123",
-  "ideaId": "456",
-  "message": "How should I validate my fintech idea?"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "response": "Great question! Have you talked to 10 potential users..."
-}
-```
-
-### Matching
-
-#### GET /matches?userId={userId}
-Get co-founder recommendations.
-
-**Response:**
-```json
-{
-  "success": true,
-  "matches": [
-    {
-      "id": "1",
-      "name": "Priya Sharma",
-      "role": "Technical Co-Founder",
-      "skills": ["React", "Node.js", "AI/ML"],
-      "matchScore": 0.92,
-      "bio": "Full-stack engineer..."
-    }
-  ]
-}
-```
-
-### Learning
-
-#### GET /courses
-Get available courses.
-
----
-
-## 🎨 Design System
-
-### Color Palette
-```css
-Primary: #667eea → #764ba2 (Purple Gradient)
-Secondary: #f093fb → #f5576c (Pink Gradient)
-Success: #4ade80 → #22c55e (Green Gradient)
-Background: #0a0e1a (Dark Navy)
-```
-
-### Typography
-- **Display**: Space Grotesk
-- **Body**: Inter
-- **Weights**: 300-900
-
-### Components
-- **Glass Cards**: Backdrop blur with subtle borders
-- **Gradients**: All CTAs use vibrant gradients
-- **Animations**: Smooth transitions & micro-interactions
-- **Responsive**: Mobile-first breakpoints
-
----
-
-## 📸 Screenshots
-
-### Landing Page
-![Landing Page](docs/screenshots/landing.png)
-*Hero section with stats and feature highlights*
-
-### Dashboard
-![Dashboard](docs/screenshots/dashboard.png)
-*Founder dashboard with quick actions*
-
-### AI Copilot
-![AI Copilot](docs/screenshots/copilot.png)
-*Real-time chat with YC-style AI advisor*
-
-### Co-Founder Matching
-![Matching](docs/screenshots/matching.png)
-*ML-powered co-founder recommendations*
-
----
-
-## 🧪 Testing
-
-### Run Tests
-```bash
-npm test
-```
-
-### Manual Testing
-1. **Signup Flow**: Create new account
-2. **Login Flow**: Sign in with credentials
-3. **Create Idea**: Submit startup idea
-4. **AI Chat**: Test copilot responses
-5. **View Matches**: Browse co-founder recommendations
-
----
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📁 Project Structure
 
@@ -358,108 +48,157 @@ FoundryAI/
 ├── public/
 │   ├── index.html          # Main HTML file
 │   ├── css/
-│   │   └── style.css       # Design system & styles
+│   │   └── style.css       # Professional light theme CSS
 │   └── js/
 │       └── app.jsx         # React application
-├── server.js               # Express backend
+├── database/
+│   └── schema.sql          # Supabase database schema
+├── config/
+│   └── supabase.js         # Supabase client config
+├── server.js               # Express backend with Supabase
 ├── package.json
-├── backend.md              # Production architecture doc
-└── README.md
+└── .env                    # Environment variables
 ```
 
----
+## ✨ Features
 
-## 🚀 Deployment
+### For Founders
 
-### Development
+- ✅ **AI-Powered Idea Validation** - Get instant market analysis and viability scores
+- ✅ **Co-Founder Matching** - Find ideal partners with ML-powered compatibility scoring
+- ✅ **Founder Dashboard** - Track your progress from ideation to MVP
+- ✅ **Founder Status** - See current focus, blockers, and suggested actions
+- ✅ **Strategic Guidance** - YC-style questioning and personalized roadmaps
+- ✅ **Resources Library** - Curated learning materials for Indian startups
+
+### Technical Features
+
+- ✅ **Supabase Backend** - Scalable PostgreSQL database with RLS
+- ✅ **Real-time Updates** - Live data synchronization
+- ✅ **Secure Authentication** - Email/password with Supabase Auth
+- ✅ **Row Level Security** - Data isolation per user
+- ✅ **Professional UI** - Clean light theme enterprise design
+- ✅ **Responsive Design** - Works on all devices
+
+## 🗄️ Database Schema
+
+### Tables
+
+- `users` - User profiles and authentication
+- `ideas` - Startup ideas with AI validation
+- `cofounder_matches` - Co-founder matching system
+- `copilot_conversations` - AI copilot chat history
+- `founder_status` - Current founder progress tracking
+- `resources` - Learning materials and guides
+
+See `database/schema.sql` for complete schema.
+
+## 🔐 Security
+
+- **Row Level Security (RLS)** enabled on all tables
+- **Password hashing** with bcrypt
+- **JWT tokens** for session management
+- **Input validation** on all endpoints
+- **HTTPS required** in production
+
+## 🛠️ Development
+
+### Available Scripts
+
+- `npm start` - Start the development server
+- `npm run dev` - Start with nodemon (auto-restart)
+- `npm test` - Run tests (to be implemented)
+
+### Environment Variables
+
 ```bash
-npm start
+PORT=3000                                           # Server port
+JWT_SECRET=your_secret_key                          # JWT signing key
+NODE_ENV=development                                # Environment
+SUPABASE_URL=https://xxx.supabase.co               # Supabase project URL
+SUPABASE_ANON_KEY=xxx                              # Supabase anon key
 ```
 
-### Production (Coming Soon)
+## 🚢 Deployment
+
+### Deploy to Vercel
+
 ```bash
-# Build frontend
-npm run build
-
-# Start production server
-NODE_ENV=production npm start
+vercel deploy
 ```
 
-### Docker (Coming Soon)
+### Deploy to Railway
+
 ```bash
-docker-compose up
+railway up
 ```
 
----
+### Environment Variables for Production
 
-## 🗺️ Roadmap
+Make sure to set:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `JWT_SECRET` (strong random value)
+- `NODE_ENV=production`
 
-### Phase 1: MVP (Months 1-6) ✅
-- [x] Landing page
-- [x] Authentication
-- [x] Idea management
-- [x] AI Copilot (simulated)
-- [x] Co-founder matching (mock data)
-- [x] Learning modules
+## 📚 API Documentation
 
-### Phase 2: Growth (Months 7-12)
-- [ ] Real AI integration (Claude API)
-- [ ] Video pitch upload & processing
-- [ ] Advanced ML matching algorithm
-- [ ] Regional language support
-- [ ] Payment integration
+### Authentication
 
-### Phase 3: Scale (Year 2)
-- [ ] Mobile apps (React Native)
-- [ ] Investor network
-- [ ] Government funding integration
-- [ ] Multi-city events
-- [ ] API for third parties
+- `POST /api/auth/signup` - Create new account
+- `POST /api/auth/login` - Sign in
 
----
+### Ideas
+
+- `POST /api/ideas` - Submit new idea
+- `GET /api/ideas` - Get all ideas
+- `GET /api/ideas/:id` - Get specific idea
+
+### Founder Status
+
+- `GET /api/founder-status/:userId` - Get founder status
+- `PUT /api/founder-status/:userId` - Update status
+
+### Co-Founder Matching
+
+- `GET /api/matches` - Get potential matches
+- `POST /api/matches` - Create match request
+
+### Resources
+
+- `GET /api/resources` - Get learning resources
+
+### AI Copilot
+
+- `POST /api/copilot/chat` - Chat with AI copilot
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
----
+## 📝 License
 
-## 📄 License
+This project is licensed under the MIT License.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 🆘 Support
 
----
+- 📧 Email: support@foundryai.com
+- 💬 Discord: [Join our community](#)
+- 📖 Docs: [Full documentation](#)
 
-## 👥 Team
+## 🎯 Roadmap
 
-Built with ❤️ by the FoundryAI team
-
-- **Architecture**: Based on production-grade design for 10M+ users
-- **Design**: Premium dark mode with glassmorphism
-- **Backend**: Scalable REST API with microservices mindset
-
----
-
-## 📞 Support
-
-- **Email**: support@foundry-ai.com
-- **Docs**: https://docs.foundry-ai.com
-- **Community**: Join our Discord
+- [ ] Real AI integration (OpenAI/Anthropic)
+- [ ] ML-based co-founder matching algorithm
+- [ ] Pitch deck generator
+- [ ] Investor connection platform
+- [ ] Mobile app (React Native)
+- [ ] WhatsApp bot integration
 
 ---
 
-## 🙏 Acknowledgments
-
-- **Inspiration**: Y Combinator, Startup India
-- **Design**: Tailwind, Vercel, Linear
-- **Architecture**: Based on battle-tested patterns from FAANG companies
-
----
-
-**Built for India's startup ecosystem. Let's build the future together! 🚀**
+Built with ❤️ for Indian entrepreneurs

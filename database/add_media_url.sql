@@ -1,0 +1,1 @@
+ALTER TABLE ideas ADD COLUMN media_url TEXT;
