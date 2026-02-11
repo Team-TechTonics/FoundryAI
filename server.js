@@ -79,13 +79,35 @@ app.post('/api/auth/login', async (req, res) => {
 
         if (authError) return res.status(401).json({ success: false, error: 'Invalid credentials' });
 
-        const { data: userData, error: userError } = await supabaseAdmin
+        // 2. Get user profile
+        let { data: userData, error: userError } = await supabaseAdmin
             .from('users')
             .select('*')
             .eq('id', authData.user.id)
             .single();
 
-        if (userError) return res.status(400).json({ success: false, error: userError.message });
+        // Self-Healing: If user exists in Auth but not in users table, create it
+        if (userError && userError.code === 'PGRST116') {
+            console.log('Self-healing: Creating missing user profile for', authData.user.email);
+            const { data: newProfile, error: createError } = await supabaseAdmin
+                .from('users')
+                .insert([{
+                    id: authData.user.id,
+                    email: authData.user.email,
+                    name: authData.user.user_metadata?.name || authData.user.email.split('@')[0],
+                    password_hash: 'auth_handled' // Passwords managed by Supabase Auth
+                }])
+                .select().single();
+
+            if (createError) {
+                console.error('Self-healing failed:', createError);
+                return res.status(500).json({ success: false, error: 'User profile missing and could not be created' });
+            }
+            userData = newProfile;
+            userError = null;
+        } else if (userError) {
+            return res.status(400).json({ success: false, error: userError.message });
+        }
 
         res.json({ success: true, user: userData, session: authData.session });
     } catch (error) {
