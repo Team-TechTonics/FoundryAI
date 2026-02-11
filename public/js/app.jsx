@@ -1451,6 +1451,7 @@ function Dashboard() {
 
             if (data.success) {
                 const transformedIdeas = data.ideas.map(idea => ({
+                    ...idea, // Keep original names like created_at, validation_score, idea_validations
                     id: idea.id,
                     title: idea.title,
                     stage: idea.stage || 'Ideation',
@@ -1494,6 +1495,8 @@ function Dashboard() {
         if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${diffDays >= 14 ? 's' : ''} ago`;
         return `${Math.floor(diffDays / 30)} month${diffDays >= 60 ? 's' : ''} ago`;
     };
+
+    const [currentDeck, setCurrentDeck] = useState(null);
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-secondary)', paddingTop: 'var(--header-height)' }}>
@@ -1539,21 +1542,56 @@ function Dashboard() {
             {/* Main Content */}
             <main style={{ marginLeft: 'var(--sidebar-width)', flex: 1, padding: 'var(--space-6)' }}>
                 <div className="container" style={{ maxWidth: '1200px' }}>
-                    {activeTab === 'overview' && <OverviewTab user={user} ideas={ideas} setActiveTab={setActiveTab} />}
-                    {activeTab === 'ideas' && <IdeasTab user={user} ideas={ideas} onRefresh={fetchIdeas} />}
+                    {activeTab === 'overview' && <OverviewTab user={user} ideas={ideas} setActiveTab={setActiveTab} onPitchDeck={setCurrentDeck} />}
+                    {activeTab === 'ideas' && <IdeasTab user={user} ideas={ideas} onRefresh={fetchIdeas} onPitchDeck={setCurrentDeck} />}
                     {activeTab === 'validate' && <ValidationFeed user={user} />}
-                    {activeTab === 'copilot' && <CopilotTab />}
+                    {activeTab === 'copilot' && <CopilotTab user={user} ideas={ideas} />}
                     {activeTab === 'matches' && <MatchesTab />}
                     {activeTab === 'messages' && <MessagesTab />}
                     {activeTab === 'resources' && <ResourcesTab />}
                 </div>
             </main>
+
+            {/* Pitch Deck Modal */}
+            {currentDeck && (
+                <div style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 'var(--space-6)' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} onClick={() => setCurrentDeck(null)}></div>
+                    <div className="card" style={{ width: '100%', maxWidth: '900px', maxHeight: '90vh', overflow: 'hidden', zIndex: 2001, display: 'flex', flexDirection: 'column', padding: 0 }}>
+                        <div style={{ padding: 'var(--space-5) var(--space-8)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+                            <div>
+                                <h3 style={{ margin: 0 }}>✨ AI Generated Pitch Deck</h3>
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Strategic Draft • google/gemini-2.0-flash-exp:free</p>
+                            </div>
+                            <button className="btn btn-outline btn-sm" onClick={() => setCurrentDeck(null)}>Close</button>
+                        </div>
+                        <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-8)', background: '#f9fafb' }}>
+                            <div style={{ display: 'grid', gap: 'var(--space-6)' }}>
+                                {currentDeck.slides.map((slide, i) => (
+                                    <div key={i} className="card" style={{ padding: 'var(--space-6)', background: '#fff', border: '1px solid var(--border-color)' }}>
+                                        <div style={{ fontSize: '0.625rem', fontWeight: 700, color: 'var(--brand-primary)', textTransform: 'uppercase', marginBottom: 'var(--space-2)' }}>Slide {i + 1}</div>
+                                        <h4 style={{ marginBottom: 'var(--space-4)', fontSize: '1.125rem' }}>{slide.title}</h4>
+                                        <ul style={{ paddingLeft: '20px', marginBottom: 'var(--space-4)', color: 'var(--text-secondary)' }}>
+                                            {slide.points.map((p, j) => <li key={j} style={{ marginBottom: 'var(--space-1)' }}>{p}</li>)}
+                                        </ul>
+                                        <div style={{ fontSize: '0.75rem', padding: 'var(--space-3)', background: 'rgba(99, 102, 241, 0.05)', borderRadius: 'var(--radius-sm)', border: '1px dashed rgba(99, 102, 241, 0.2)', color: 'var(--brand-primary)' }}>
+                                            <strong>Visual Suggestion:</strong> {slide.visualSuggestion}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div style={{ padding: 'var(--space-5) var(--space-8)', borderTop: '1px solid var(--border-color)', textAlign: 'right', background: 'var(--bg-secondary)' }}>
+                            <button className="btn btn-primary" onClick={() => window.print()}>🖨️ Print to PDF</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
 // Dashboard Tabs
-function OverviewTab({ user, ideas, setActiveTab }) {
+function OverviewTab({ user, ideas, setActiveTab, onPitchDeck }) {
     const activeIdeasCount = ideas.length;
     const avgScore = activeIdeasCount > 0
         ? Math.round(ideas.reduce((acc, i) => acc + (i.score || 0), 0) / activeIdeasCount)
@@ -1668,6 +1706,7 @@ function OverviewTab({ user, ideas, setActiveTab }) {
                                 idea={idea}
                                 onViewDetails={() => setActiveTab('ideas')}
                                 onAnalyze={() => setActiveTab('copilot')}
+                                onPitchDeck={onPitchDeck}
                             />
                         ))}
                     </div>
@@ -1677,7 +1716,7 @@ function OverviewTab({ user, ideas, setActiveTab }) {
     );
 }
 
-function IdeasTab({ user, ideas, onRefresh }) {
+function IdeasTab({ user, ideas, onRefresh, onPitchDeck }) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState('');
     const [problem, setProblem] = useState('');
@@ -1846,7 +1885,7 @@ function IdeasTab({ user, ideas, onRefresh }) {
             ) : (
                 <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
                     {ideas.map(idea => (
-                        <IdeaCard key={idea.id} idea={idea} detailed />
+                        <IdeaCard key={idea.id} idea={idea} detailed onPitchDeck={onPitchDeck} />
                     ))}
                 </div>
             )}
@@ -1854,26 +1893,157 @@ function IdeasTab({ user, ideas, onRefresh }) {
     );
 }
 
-function CopilotTab() {
-    return (
-        <>
-            <div style={{ marginBottom: 'var(--space-8)' }}>
-                <h1 style={{ marginBottom: 'var(--space-2)' }}>AI Copilot</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Your strategic advisor for venture building</p>
-            </div>
+function CopilotTab({ user, ideas }) {
+    const [selectedIdea, setSelectedIdea] = useState(ideas[0] || null);
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState('');
+    const [loading, setLoading] = useState(false);
+    const chatEndRef = React.useRef(null);
 
-            <div className="card" style={{ padding: 'var(--space-12)', minHeight: '500px', textAlign: 'center' }}>
-                <div style={{ paddingTop: 'var(--space-16)' }}>
-                    <div style={{ color: 'var(--brand-primary)', marginBottom: 'var(--space-4)' }}>
-                        <Icon name="brain" size={64} color="var(--brand-primary)" />
-                    </div>
-                    <h3 style={{ marginBottom: 'var(--space-3)' }}>AI Copilot Coming Soon</h3>
-                    <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto' }}>
-                        Get YC-style questioning, market analysis, and strategic guidance powered by advanced AI
-                    </p>
+    useEffect(() => {
+        if (selectedIdea) {
+            // Fetch initial history if needed, but for now we'll just start fresh
+            setMessages([
+                { role: 'assistant', content: `Hi ${user.name}! I'm your AI Strategic Advisor. I've analyzed your idea: **${selectedIdea.title}**. \n\nWhat specific part of the business model or MVP should we challenge today?` }
+            ]);
+        }
+    }, [selectedIdea]);
+
+    const scrollToBottom = () => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(scrollToBottom, [messages]);
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!input.trim() || !selectedIdea || loading) return;
+
+        const userMsg = input.trim();
+        setInput('');
+        setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+        setLoading(true);
+
+        try {
+            const res = await fetch('/api/copilot/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    ideaId: selectedIdea.id,
+                    message: userMsg
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+            } else {
+                setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I'm having trouble connecting to my brain right now. Please try again." }]);
+            }
+        } catch (error) {
+            setMessages(prev => [...prev, { role: 'assistant', content: "Network error. Please try again." }]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (ideas.length === 0) {
+        return (
+            <div style={{ padding: 'var(--space-12)', textAlign: 'center' }}>
+                <Icon name="lightbulb" size={64} color="var(--text-disabled)" />
+                <h2 style={{ marginTop: 'var(--space-4)' }}>No Ideas Yet</h2>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-6)' }}>Submit an idea first to start consulting with the AI Copilot.</p>
+                <button className="btn btn-primary" onClick={() => window.location.hash = '#ideas'}>Go to Ideas</button>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ height: 'calc(100vh - 140px)', display: 'grid', gridTemplateColumns: '280px 1fr', gap: 'var(--space-6)' }}>
+            {/* Left Sidebar: Idea Selector */}
+            <div className="card" style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 'var(--space-4)', letterSpacing: '0.05em' }}>Select Idea</h3>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                    {ideas.map(idea => (
+                        <div
+                            key={idea.id}
+                            onClick={() => setSelectedIdea(idea)}
+                            style={{
+                                padding: 'var(--space-3) var(--space-4)',
+                                borderRadius: 'var(--radius-md)',
+                                cursor: 'pointer',
+                                background: selectedIdea?.id === idea.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                                border: selectedIdea?.id === idea.id ? '1px solid var(--brand-primary)' : '1px solid transparent',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: selectedIdea?.id === idea.id ? 'var(--brand-primary)' : 'var(--text-primary)' }}>{idea.title}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '2px' }}>{idea.industry || 'Tech'}</div>
+                        </div>
+                    ))}
                 </div>
             </div>
-        </>
+
+            {/* Chat Interface */}
+            <div className="card" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: 0 }}>
+                {/* Header */}
+                <div style={{ padding: 'var(--space-4) var(--space-6)', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)', background: 'var(--bg-secondary)' }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--brand-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                        <Icon name="brain" size={20} />
+                    </div>
+                    <div>
+                        <div style={{ fontWeight: 700 }}>AI Strategic Advisor</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--brand-primary)', fontWeight: 600 }}>Powered by DeepMind Gemini</div>
+                    </div>
+                </div>
+
+                {/* Messages */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', background: '#f9fafb' }}>
+                    {messages.map((msg, i) => (
+                        <div key={i} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', maxWidth: '80%' }}>
+                            <div style={{
+                                padding: '12px 16px',
+                                borderRadius: '16px',
+                                background: msg.role === 'user' ? 'var(--brand-primary)' : '#fff',
+                                color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                fontSize: '0.9375rem',
+                                lineHeight: '1.5',
+                                border: msg.role === 'user' ? 'none' : '1px solid var(--border-color)',
+                                borderBottomRightRadius: msg.role === 'user' ? '4px' : '16px',
+                                borderBottomLeftRadius: msg.role === 'user' ? '16px' : '4px',
+                                whiteSpace: 'pre-wrap'
+                            }}>
+                                {msg.content.split('**').map((part, index) => index % 2 === 1 ? <strong key={index}>{part}</strong> : part)}
+                            </div>
+                        </div>
+                    ))}
+                    {loading && (
+                        <div style={{ alignSelf: 'flex-start', background: '#fff', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', border: '1px solid var(--border-color)', display: 'flex', gap: '4px' }}>
+                            <span className="dot-typing" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--text-disabled)', animation: 'pulse 1.5s infinite' }}></span>
+                            <span className="dot-typing" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--text-disabled)', animation: 'pulse 1.5s infinite 0.2s' }}></span>
+                            <span className="dot-typing" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--text-disabled)', animation: 'pulse 1.5s infinite 0.4s' }}></span>
+                        </div>
+                    )}
+                    <div ref={chatEndRef} />
+                </div>
+
+                {/* Input */}
+                <form onSubmit={handleSendMessage} style={{ padding: 'var(--space-4) var(--space-6)', background: '#fff', borderTop: '1px solid var(--border-color)', display: 'flex', gap: 'var(--space-3)' }}>
+                    <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Ask for feedback, challenge your model, or ask for MVP tips..."
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        style={{ borderRadius: '24px', paddingLeft: '20px' }}
+                    />
+                    <button type="submit" className="btn btn-primary" style={{ borderRadius: '50%', width: 44, height: 44, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }} disabled={loading}>
+                        <Icon name="send" size={18} />
+                    </button>
+                </form>
+            </div>
+        </div>
     );
 }
 
@@ -2664,7 +2834,26 @@ function ActionCard({ icon, title, description, onClick }) {
     );
 }
 
-function IdeaCard({ idea, detailed, onViewDetails, onAnalyze }) {
+function IdeaCard({ idea, detailed, onViewDetails, onAnalyze, onPitchDeck }) {
+    const [generating, setGenerating] = useState(false);
+
+    const handlePitchDeck = async () => {
+        setGenerating(true);
+        try {
+            const res = await fetch(`/api/ideas/${idea.id}/pitch-deck`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success && onPitchDeck) {
+                onPitchDeck(data.deck);
+            } else {
+                alert(data.error || 'Failed to generate deck');
+            }
+        } catch (e) {
+            alert('Network error');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
     return (
         <div className="card" style={{ padding: 'var(--space-5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-3)' }}>
@@ -2675,11 +2864,11 @@ function IdeaCard({ idea, detailed, onViewDetails, onAnalyze }) {
                         <span>•</span>
                         <span>{idea.stage}</span>
                         <span>•</span>
-                        <span>{idea.created}</span>
+                        <span>{idea.created_at ? new Date(idea.created_at).toLocaleDateString() : 'New'}</span>
                     </div>
                 </div>
                 <div className="badge badge-primary" style={{ padding: '0.375rem 0.875rem', fontSize: '0.8125rem', fontWeight: 600 }}>
-                    {idea.score}% Match
+                    {idea.validation_score || 0}% Score
                 </div>
             </div>
             {detailed && (
@@ -2695,12 +2884,12 @@ function IdeaCard({ idea, detailed, onViewDetails, onAnalyze }) {
                     )}
 
                     <h5 style={{ marginBottom: 'var(--space-3)', fontSize: '0.875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                        Community Feedback ({idea.validations?.length || 0})
+                        Community Feedback ({idea.idea_validations?.length || 0})
                     </h5>
 
-                    {idea.validations && idea.validations.length > 0 ? (
+                    {idea.idea_validations && idea.idea_validations.length > 0 ? (
                         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
-                            {idea.validations.map((v, i) => (
+                            {idea.idea_validations.map((v, i) => (
                                 <div key={i} style={{ padding: 'var(--space-3)', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-light)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                                         <Icon name={v.vote_type === 'tick' ? 'check' : 'x'} size={14} color={v.vote_type === 'tick' ? 'var(--accent-success)' : '#ef4444'} />
@@ -2721,7 +2910,15 @@ function IdeaCard({ idea, detailed, onViewDetails, onAnalyze }) {
             )}
             <div style={{ display: 'flex', gap: 'var(--space-3)', paddingTop: 'var(--space-3)', borderTop: detailed ? 'none' : '1px solid var(--border-light)' }}>
                 {!detailed && <button className="btn btn-sm btn-primary" onClick={onViewDetails}>View Details</button>}
-                <button className="btn btn-sm btn-secondary" onClick={onAnalyze || (() => alert('Navigating to AI Copilot...'))}>AI Analysis</button>
+                <button className="btn btn-sm btn-secondary" onClick={onAnalyze || (() => alert('Navigating to AI Copilot...'))}>Strategic Analysis</button>
+                <button
+                    className="btn btn-sm btn-outline"
+                    onClick={handlePitchDeck}
+                    disabled={generating}
+                    style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)' }}
+                >
+                    {generating ? 'Drafting...' : '✨ Pitch Deck'}
+                </button>
             </div>
         </div>
     );

@@ -405,38 +405,132 @@ app.post('/api/resources/:id/complete', async (req, res) => {
 });
 
 // =====================================================
-// AI COPILOT ROUTES (Simulated - TODO: Connect to Real LLM)
+// AI COPILOT ROUTES (Real AI with OpenRouter)
 // =====================================================
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 app.post('/api/copilot/chat', async (req, res) => {
     try {
         const { userId, ideaId, message } = req.body;
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-        const aiResponses = [
-            "That's a bold vision! Have you considered the customer acquisition cost in this niche?",
-            "Interesting point. How do you plan to handle the regulatory hurdles for this model in India?",
-            "Let's focus on the MVP. What is the one core feature your 'early adopters' cannot live without?",
-            "I've seen similar models fail on retention. How will you keep users coming back?",
-            "That sounds like a Tier-1 city problem. Is there a version of this for Bharat?"
-        ];
+        if (!OPENROUTER_API_KEY) {
+            return res.json({ success: true, response: "AI is currently in simulation mode. Add OPENROUTER_API_KEY to .env to activate real AI." });
+        }
 
-        const aiResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+        // 1. Fetch Previous Conversation History
+        const { data: convData } = await supabaseAdmin
+            .from('copilot_conversations')
+            .select('messages')
+            .eq('user_id', userId)
+            .eq('idea_id', ideaId)
+            .order('created_at', { ascending: false })
+            .limit(1);
 
-        // Store conversation
-        const messages = [
+        let messages = [];
+        if (convData?.[0]?.messages) {
+            messages = convData[0].messages.map(m => ({
+                role: m.role,
+                content: m.content
+            }));
+        }
+
+        // 2. Fetch Idea Context
+        const { data: idea } = await supabaseAdmin.from('ideas').select('*').eq('id', ideaId).single();
+
+        // 3. Prepare System Message
+        const systemMessage = {
+            role: "system",
+            content: `You are the FoundryAI Strategic Advisor. 
+            You are a world-class startup mentor (Persona: Y-Combinator Partner). 
+            Your goal is to help founders validate their ideas and build MVPs. 
+            CONTEXT: The founder is working on: "${idea?.title}". 
+            PROBLEM: "${idea?.problem}". 
+            SOLUTION: "${idea?.solution}". 
+            Keep responses concise, brutally honest, and actionable. Use bullet points.`
+        };
+
+        const apiMessages = [systemMessage, ...messages, { role: "user", content: message }];
+
+        // 4. Call OpenRouter
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://foundrytt.vercel.app", // Optional
+                "X-Title": "FoundryAI" // Optional
+            },
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-exp:free",
+                messages: apiMessages
+            })
+        });
+
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+
+        // 5. Update Conversation in Database
+        const newMessages = [
+            ...(convData?.[0]?.messages || []),
             { role: 'user', content: message, timestamp: new Date().toISOString() },
             { role: 'assistant', content: aiResponse, timestamp: new Date().toISOString() },
         ];
 
-        const { data, error } = await supabaseAdmin
-            .from('copilot_conversations')
-            .insert([{ user_id: userId, idea_id: ideaId, messages }])
-            .select().single();
+        if (convData?.[0]) {
+            await supabaseAdmin.from('copilot_conversations').update({ messages: newMessages }).eq('id', convData[0].id);
+        } else {
+            await supabaseAdmin.from('copilot_conversations').insert([{ user_id: userId, idea_id: ideaId, messages: newMessages }]);
+        }
 
-        if (error) return res.status(400).json({ success: false, error: error.message });
         res.json({ success: true, response: aiResponse });
     } catch (error) {
-        res.status(500).json({ success: false, error: 'Copilot failed to respond' });
+        console.error('Copilot AI error:', error);
+        res.status(500).json({ success: false, error: 'AI advisor is currently unavailable' });
+    }
+});
+
+// =====================================================
+// PITCH DECK GENERATION
+// =====================================================
+
+app.post('/api/ideas/:id/pitch-deck', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data: idea } = await supabaseAdmin.from('ideas').select('*').eq('id', id).single();
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+        if (!OPENROUTER_API_KEY) {
+            return res.json({ success: false, error: "OpenRouter API Key required for Pitch Deck generation" });
+        }
+
+        const prompt = `Generate a 10-slide startup pitch deck structure for: ${idea.title}. 
+        Problem: ${idea.problem}. 
+        Solution: ${idea.solution}. 
+        Format as a JSON object with a 'slides' array. Each slide should have 'title', 'points' (array of 3-4 key points), and 'visualSuggestion'. 
+        Return ONLY valid JSON.`;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-exp:free",
+                messages: [{ role: "user", content: prompt }]
+            })
+        });
+
+        const aiData = await response.json();
+        const text = aiData.choices[0].message.content;
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const deck = JSON.parse(jsonMatch[0]);
+
+        res.json({ success: true, deck });
+    } catch (error) {
+        console.error('Pitch deck error:', error);
+        res.status(500).json({ success: false, error: 'Failed to generate pitch deck' });
     }
 });
 
