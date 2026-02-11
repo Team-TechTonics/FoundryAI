@@ -407,15 +407,20 @@ app.post('/api/resources/:id/complete', async (req, res) => {
 // =====================================================
 // AI COPILOT ROUTES (Real AI with OpenRouter)
 // =====================================================
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+// Use native fetch if available (Node 18+), otherwise fallback to node-fetch
+const getFetch = () => {
+    if (global.fetch) return global.fetch;
+    return (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+};
 
 app.post('/api/copilot/chat', async (req, res) => {
     try {
         const { userId, ideaId, message } = req.body;
-        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 
         if (!OPENROUTER_API_KEY) {
-            return res.json({ success: true, response: "AI is currently in simulation mode. Add OPENROUTER_API_KEY to .env to activate real AI." });
+            console.warn('AI Copilot: No API key found (OPENROUTER_API_KEY or OPENAI_API_KEY)');
+            return res.json({ success: true, response: "AI is currently in simulation mode. Add OPENROUTER_API_KEY to your environment variables to activate real AI." });
         }
 
         // 1. Fetch Previous Conversation History
@@ -453,6 +458,7 @@ app.post('/api/copilot/chat', async (req, res) => {
         const apiMessages = [systemMessage, ...messages, { role: "user", content: message }];
 
         // 4. Call OpenRouter
+        const fetch = getFetch();
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -468,6 +474,17 @@ app.post('/api/copilot/chat', async (req, res) => {
         });
 
         const data = await response.json();
+
+        if (data.error) {
+            console.error('OpenRouter API Error:', data.error);
+            throw new Error(`OpenRouter Error: ${data.error.message || 'Unknown error'}`);
+        }
+
+        if (!data.choices || !data.choices[0]) {
+            console.error('OpenRouter Invalid Response:', data);
+            throw new Error('AI returned an empty or invalid response');
+        }
+
         const aiResponse = data.choices[0].message.content;
 
         // 5. Update Conversation in Database
@@ -486,7 +503,7 @@ app.post('/api/copilot/chat', async (req, res) => {
         res.json({ success: true, response: aiResponse });
     } catch (error) {
         console.error('Copilot AI error:', error);
-        res.status(500).json({ success: false, error: 'AI advisor is currently unavailable' });
+        res.status(500).json({ success: false, error: `AI advisor error: ${error.message}` });
     }
 });
 
@@ -498,10 +515,10 @@ app.post('/api/ideas/:id/pitch-deck', async (req, res) => {
     try {
         const { id } = req.params;
         const { data: idea } = await supabaseAdmin.from('ideas').select('*').eq('id', id).single();
-        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
 
         if (!OPENROUTER_API_KEY) {
-            return res.json({ success: false, error: "OpenRouter API Key required for Pitch Deck generation" });
+            return res.status(401).json({ success: false, error: "OpenRouter API Key missing. Please add it to your environment variables." });
         }
 
         const prompt = `Generate a 10-slide startup pitch deck structure for: ${idea.title}. 
@@ -510,11 +527,14 @@ app.post('/api/ideas/:id/pitch-deck', async (req, res) => {
         Format as a JSON object with a 'slides' array. Each slide should have 'title', 'points' (array of 3-4 key points), and 'visualSuggestion'. 
         Return ONLY valid JSON.`;
 
+        const fetch = getFetch();
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://foundrytt.vercel.app",
+                "X-Title": "FoundryAI"
             },
             body: JSON.stringify({
                 model: "google/gemini-2.0-flash-exp:free",
@@ -523,14 +543,30 @@ app.post('/api/ideas/:id/pitch-deck', async (req, res) => {
         });
 
         const aiData = await response.json();
+
+        if (aiData.error) {
+            console.error('Pitch Deck API Error:', aiData.error);
+            return res.status(500).json({ success: false, error: `AI Error: ${aiData.error.message || 'Unknown error'}` });
+        }
+
+        if (!aiData.choices || !aiData.choices[0]) {
+            console.error('Pitch Deck Invalid Response:', aiData);
+            return res.status(500).json({ success: false, error: 'AI returned an empty response' });
+        }
+
         const text = aiData.choices[0].message.content;
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        const deck = JSON.parse(jsonMatch[0]);
 
+        if (!jsonMatch) {
+            console.error('Pitch Deck JSON Parsing Error. Text:', text);
+            return res.status(500).json({ success: false, error: 'AI failed to generate a valid JSON structure' });
+        }
+
+        const deck = JSON.parse(jsonMatch[0]);
         res.json({ success: true, deck });
     } catch (error) {
         console.error('Pitch deck error:', error);
-        res.status(500).json({ success: false, error: 'Failed to generate pitch deck' });
+        res.status(500).json({ success: false, error: error.message || 'Failed to generate pitch deck' });
     }
 });
 
