@@ -113,6 +113,9 @@ const Icon = ({ name, size = 20, color = 'currentColor' }) => {
         video: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>`,
         'external-link': `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`,
         play: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`,
+        zap: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`,
+        save: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`,
+        sparkles: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>`,
         x: `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`,
     };
 
@@ -143,7 +146,7 @@ function Header() {
                 if (data.success && data.requests) {
                     setNotificationCount(data.requests.length);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { /* ignore */ }
         };
         fetchNotifications();
         const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
@@ -251,141 +254,217 @@ function Header() {
 }
 
 // ========================
-// LANDING PAGE
+// LANDING PAGE - CRAZY IMMERSIVE REDESIGN
 // ========================
 
 function LandingPage() {
     const { setCurrentPage } = useAppContext();
+    const [scrolled, setScrolled] = useState(0);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY);
+
+            // Handle reveal-on-scroll elements
+            const reveals = document.querySelectorAll('.reveal-on-scroll');
+            reveals.forEach(el => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.85) {
+                    el.classList.add('active');
+                }
+            });
+        };
+        window.addEventListener('scroll', handleScroll);
+        // Initial check
+        setTimeout(handleScroll, 100);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
-        <div>
-            {/* Hero Section */}
-            <section className="hero">
-                <div className="container">
-                    <div className="hero-content">
-                        <div className="hero-badge">
-                            <span style={{ marginRight: '6px' }}>●</span>
-                            TRUSTED BY 100,000+ FOUNDERS
-                        </div>
+        <div style={{ background: 'var(--bg-primary)', overflow: 'hidden' }}>
+            {/* 3D Parallax Hero */}
+            <section className="hero bg-mesh" style={{ minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center' }}>
+                {/* 3D Moving Elements - Scroll Linked */}
+                <div className="parallax-layer animate-float" style={{
+                    top: '20%',
+                    left: '10%',
+                    transform: `translateY(${scrolled * 0.2}px)`,
+                    opacity: 0.1
+                }}>
+                    <Icon name="rocket" size={120} color="var(--brand-primary)" />
+                </div>
+                <div className="parallax-layer animate-float" style={{
+                    top: '60%',
+                    right: '15%',
+                    transform: `translateY(${scrolled * -0.15}px)`,
+                    opacity: 0.08,
+                    animationDelay: '-5s'
+                }}>
+                    <Icon name="target" size={180} color="var(--brand-secondary)" />
+                </div>
+                <div className="parallax-layer animate-float" style={{
+                    bottom: '15%',
+                    left: '20%',
+                    transform: `translateY(${scrolled * 0.12}px)`,
+                    opacity: 0.05,
+                    animationDelay: '-10s'
+                }}>
+                    <Icon name="brain" size={100} color="#fff" />
+                </div>
 
-                        <h1 className="text-balance">
-                            Build Your Startup<br />
-                            With AI-Powered <span className="text-gradient">Intelligence</span>
+                <div className="container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="hero-content" style={{
+                        transform: `translateY(${scrolled * -0.1}px)`,
+                        transition: 'transform 0.1s linear'
+                    }}>
+                        <h1 className="section-title-premium reveal-on-scroll" style={{
+                            color: 'white',
+                            fontSize: 'clamp(3rem, 10vw, 6rem)',
+                            textShadow: '0 20px 40px rgba(0,0,0,0.3)'
+                        }}>
+                            Architect the <br />
+                            <span className="text-gradient" style={{ filter: 'drop-shadow(0 10px 20px rgba(99, 102, 241, 0.4))' }}>Next Unicorn</span>
                         </h1>
 
-                        <p style={{ maxWidth: '700px', margin: '0 auto var(--space-8)' }}>
-                            A comprehensive platform that combines AI validation, co-founder matching,
-                            and strategic guidance to help Indian entrepreneurs succeed. From idea to execution.
+                        <p className="reveal-on-scroll" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1.4rem', maxWidth: '800px', margin: '0 auto 48px', lineHeight: '1.6' }}>
+                            FoundryAI combines high-stakes reasoning with real-world execution tools.
+                            Build, validate, and partner at the speed of thought.
                         </p>
 
-                        <div className="hero-actions">
-                            <button className="btn btn-primary btn-lg" onClick={() => setCurrentPage('signup')}>
-                                Start Building Free
+                        <div className="hero-actions reveal-on-scroll" style={{ transitionDelay: '0.2s' }}>
+                            <button className="btn btn-premium btn-lg" style={{ minWidth: '220px', fontSize: '1.1rem' }} onClick={() => setCurrentPage('signup')}>
+                                Initialize Project
+                                <Icon name="rocket" size={20} />
                             </button>
-                            <button className="btn btn-secondary btn-lg">
-                                Watch Demo
+                            <button className="btn btn-outline btn-lg" style={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', minWidth: '220px' }} onClick={() => document.getElementById('features').scrollIntoView()}>
+                                View Components
                             </button>
-                        </div>
-
-                        <div className="hero-stats">
-                            <div className="stat-card">
-                                <div className="stat-value">100K+</div>
-                                <div className="stat-label">Active Founders</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-value">50K+</div>
-                                <div className="stat-label">Ideas Validated</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-value">15K+</div>
-                                <div className="stat-label">Successful Matches</div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-value">₹500Cr+</div>
-                                <div className="stat-label">Funding Raised</div>
-                            </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Perspective Grid Background */}
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '40%',
+                    background: 'linear-gradient(to top, rgba(99,102,241,0.1) 0%, transparent 100%)',
+                    clipPath: 'polygon(0 100%, 100% 100%, 100% 0, 0 100%)',
+                    zIndex: 1,
+                    pointerEvents: 'none'
+                }}></div>
             </section>
 
-            {/* Features Section */}
-            <section id="features" className="section" style={{ background: 'white' }}>
+            {/* Scrolling Ticker for High Credibility */}
+            <div style={{ background: 'var(--navy-900)', padding: '24px 0', borderY: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                <div className="scrolling-ticker">
+                    {[1, 2].map(i => (
+                        <div key={i} style={{ display: 'flex', gap: '80px', paddingRight: '120px' }}>
+                            {['Y-COMBINATOR READY', 'AI-DRIVEN VALIDATION', 'TECHSTARS COMPLIANT', 'REAL-TIME MATCHING', 'STRATEGIC BLUEPRINTS', 'GLOBAL STARTUP NETWORK'].map(t => (
+                                <div key={t} style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 800, fontSize: '0.875rem', letterSpacing: '0.2em' }}>{t}</div>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* 3D Tilt Feature Section */}
+            <section id="features" className="section diagonal-section bg-navy" style={{ margin: 'var(--space-16) 0', position: 'relative' }}>
+                {/* Mid-page Parallax Nodes */}
+                <div className="parallax-layer animate-float" style={{
+                    top: '20%',
+                    right: '5%',
+                    transform: `translateY(${scrolled * 0.1}px)`,
+                    opacity: 0.1
+                }}>
+                    <Icon name="sparkles" size={80} color="var(--brand-primary)" />
+                </div>
+                <div className="parallax-layer animate-float" style={{
+                    bottom: '10%',
+                    left: '5%',
+                    transform: `translateY(${scrolled * -0.05}px)`,
+                    opacity: 0.05
+                }}>
+                    <Icon name="lightbulb" size={60} color="#fff" />
+                </div>
+
                 <div className="container">
-                    <div className="section-header">
-                        <h6 className="section-badge">FEATURES</h6>
-                        <h2 style={{ marginBottom: 'var(--space-4)' }}>Everything you need to succeed</h2>
-                        <p style={{ color: 'var(--text-secondary)', maxWidth: '600px', margin: '0 auto' }}>
-                            Comprehensive tools for every stage of your entrepreneurial journey
-                        </p>
+                    <div className="section-header reveal-on-scroll">
+                        <h6 className="section-badge" style={{ background: 'rgba(255,255,255,0.05)', color: '#fff' }}>THE STACK</h6>
+                        <h2 className="section-title-premium" style={{ color: 'white' }}>Engineered for Advantage</h2>
                     </div>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: 'var(--space-6)'
-                    }}>
+                    <div className="perspective-container feature-grid-premium">
                         <FeatureCard
                             icon="brain"
-                            title="AI Validation Engine"
-                            description="Get instant market analysis, competitive insights, and viability scores for your startup idea using advanced AI."
+                            title="DeepSeek R1 Advisory"
+                            description="Access the most powerful reasoning models logic-chained specifically for startup structural audits."
+                            gradient="linear-gradient(135deg, #6366f1 0%, #a855f7 100%)"
                         />
                         <FeatureCard
                             icon="users"
-                            title="Co-Founder Matching"
-                            description="Find your ideal co-founder with ML-powered compatibility scoring based on skills, experience, and working style."
+                            title="Neural Matchmaking"
+                            description="Our proprietary vector matching finds partners based on sub-surface trait compatibility, not just resumes."
+                            gradient="linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)"
                         />
                         <FeatureCard
                             icon="target"
-                            title="Strategic Guidance"
-                            description="Receive YC-style questioning and personalized roadmaps tailored to India's startup ecosystem."
+                            title="Validation Nodes"
+                            description="Distribute your concept through our network of verified mentors for high-fidelity market signals."
+                            gradient="linear-gradient(135deg, #10b981 0%, #3b82f6 100%)"
                         />
                     </div>
                 </div>
             </section>
 
-            {/* How it Works */}
-            <section id="how-it-works" className="section">
+            {/* Visual Step Timeline */}
+            <section id="how-it-works" className="section" style={{ padding: 'var(--space-16) 0' }}>
                 <div className="container">
-                    <div className="section-header">
-                        <h6 className="section-badge">HOW IT WORKS</h6>
-                        <h2>Your path from idea to execution</h2>
+                    <div className="reveal-on-scroll" style={{ textAlign: 'center', marginBottom: 'var(--space-16)' }}>
+                        <h2 className="section-title-premium">The Foundry Workflow</h2>
+                        <p style={{ maxWidth: '600px', margin: '0 auto' }}>A structured, 4-phase acceleration process for ambitious builders.</p>
                     </div>
 
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                        gap: 'var(--space-8)',
-                        maxWidth: '1000px',
-                        margin: '0 auto'
-                    }}>
-                        <StepCard number="1" title="Submit Your Idea" description="Share your startup concept and get instant AI feedback" />
-                        <StepCard number="2" title="Get Validated" description="Receive market analysis and actionable insights" />
-                        <StepCard number="3" title="Find Co-Founders" description="Match with complementary skill sets" />
-                        <StepCard number="4" title="Start Building" description="Execute with guided roadmaps and resources" />
+                    <div style={{ position: 'relative' }}>
+                        {/* Connecting Line */}
+                        <div style={{ position: 'absolute', top: '40px', left: '10%', right: '10%', height: '2px', background: 'var(--bg-tertiary)', zIndex: 0 }}></div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-8)', position: 'relative', zIndex: 1 }}>
+                            <StepCard number="01" title="Deconstruct" description="Break your idea into testable units of value using AI deconstruction." />
+                            <StepCard number="02" title="Simulate" description="Run logic simulations to find failure points before you write a line of code." />
+                            <StepCard number="03" title="Assemble" description="Match with experts who fill the exact gaps identified in your simulation." />
+                            <StepCard number="04" title="Deploy" description="Go from concept to MVP with auto-generated technical roadmaps." />
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* CTA */}
-            <section className="section" style={{ background: 'white' }}>
+            {/* Immersive Video/CTA Area */}
+            <section className="section reveal-on-scroll" style={{ perspective: '2000px' }}>
                 <div className="container">
-                    <div className="card" style={{
-                        padding: 'var(--space-12)',
+                    <div className="tilt-card" style={{
+                        background: 'var(--navy-900)',
+                        borderRadius: '40px',
+                        padding: 'var(--space-16)',
                         textAlign: 'center',
-                        background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                        border: 'none',
-                        color: 'white'
+                        color: 'white',
+                        boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)'
                     }}>
-                        <h2 style={{ color: 'white', marginBottom: 'var(--space-4)' }}>
-                            Ready to build the next big thing?
-                        </h2>
-                        <p style={{ color: 'rgba(255,255,255,0.9)', maxWidth: '600px', margin: '0 auto var(--space-8)', fontSize: '1.125rem' }}>
-                            Join thousands of founders who are turning their ideas into successful startups with FoundryAI.
-                        </p>
-                        <button className="btn btn-lg" style={{ background: 'white', color: 'var(--brand-primary)' }} onClick={() => setCurrentPage('signup')}>
-                            Get Started Free
-                        </button>
+                        <div style={{ transform: 'translateZ(50px)' }}>
+                            <h2 style={{ color: 'white', fontSize: 'clamp(2rem, 5vw, 3.5rem)', marginBottom: 'var(--space-6)' }}>
+                                Stop guessing. <br />
+                                <span className="text-gradient">Start Founding.</span>
+                            </h2>
+                            <p style={{ color: 'rgba(255,255,255,0.6)', maxWidth: '600px', margin: '0 auto 48px', fontSize: '1.25rem' }}>
+                                Join the elite network of founders building the next generation of global tech.
+                            </p>
+                            <button className="btn btn-premium btn-lg" style={{ padding: '20px 60px' }} onClick={() => setCurrentPage('signup')}>
+                                Launch Your Venture
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -394,48 +473,49 @@ function LandingPage() {
 }
 
 // Helper Components
-function FeatureCard({ icon, title, description }) {
+function FeatureCard({ icon, title, description, gradient }) {
     return (
-        <div className="card" style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+        <div className="card tilt-card hover-glow" style={{ padding: 'var(--space-10)', border: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.03)' }}>
             <div style={{
-                display: 'inline-flex',
-                padding: 'var(--space-4)',
-                background: 'rgba(99, 102, 241, 0.1)',
-                borderRadius: 'var(--radius-lg)',
-                marginBottom: 'var(--space-4)',
-                color: 'var(--brand-primary)'
+                width: '64px',
+                height: '64px',
+                background: gradient,
+                borderRadius: 'var(--radius-xl)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                marginBottom: 'var(--space-8)',
+                boxShadow: `0 10px 30px ${gradient.split(' ').pop().replace(')', ', 0.3)')}`,
+                transform: 'translateZ(30px)'
             }}>
-                <Icon name={icon} size={24} />
+                <Icon name={icon} size={32} />
             </div>
-            <h4 style={{ marginBottom: 'var(--space-3)' }}>{title}</h4>
-            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: 0 }}>{description}</p>
+            <h4 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-4)', color: '#fff', transform: 'translateZ(40px)' }}>{title}</h4>
+            <p style={{ fontSize: '1.05rem', lineHeight: '1.7', color: 'rgba(255,255,255,0.5)', margin: 0, transform: 'translateZ(20px)' }}>{description}</p>
         </div>
     );
 }
 
 function StepCard({ number, title, description }) {
     return (
-        <div style={{ textAlign: 'center' }}>
-            <div style={{
-                width: '48px',
-                height: '48px',
-                margin: '0 auto var(--space-4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'var(--brand-primary)',
-                color: 'white',
-                borderRadius: 'var(--radius-lg)',
-                fontSize: '1.25rem',
-                fontWeight: 700
-            }}>
-                {number}
-            </div>
-            <h4 style={{ marginBottom: 'var(--space-2)' }}>{title}</h4>
-            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: 0 }}>{description}</p>
+        <div className="reveal-on-scroll" style={{ textAlign: 'center', transitionDelay: `${parseInt(number) * 0.1}s` }}>
+            <div className="step-number-pill" style={{
+                width: '80px',
+                height: '80px',
+                fontSize: '1.5rem',
+                background: 'white',
+                color: 'var(--brand-primary)',
+                boxShadow: 'var(--shadow-lg)',
+                border: '4px solid var(--bg-secondary)',
+                marginBottom: 'var(--space-6)'
+            }}>{number}</div>
+            <h4 style={{ fontSize: '1.25rem', marginBottom: 'var(--space-2)' }}>{title}</h4>
+            <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>{description}</p>
         </div>
     );
 }
+
 
 // ========================
 // AUTH PAGES
@@ -534,19 +614,23 @@ function LoginPage() {
 // --- STEP COMPONENTS (Defined Outside for Stability) ---
 const Step1Welcome = () => (
     <div style={{ textAlign: 'center', padding: '40px 0' }}>
-        <div style={{ fontSize: '60px', marginBottom: '24px' }}>🚀</div>
+        <div style={{ marginBottom: '24px', opacity: 0.8 }}>
+            <Icon name="rocket" size={80} color="var(--brand-primary)" />
+        </div>
         <h1 style={{ fontSize: '2rem', marginBottom: '16px' }}>Welcome to FoundryAI!</h1>
         <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', maxWidth: '500px', margin: '0 auto 32px', lineHeight: '1.6' }}>
             Let's build your profile in <strong>10 quick steps</strong>. This helps us find you the perfect co-founder.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
             {[
-                { icon: '⚡', title: 'Quick Setup', desc: 'Only 15-20 minutes' },
-                { icon: '💾', title: 'Auto-Save', desc: 'Progress saved automatically' },
-                { icon: '🤝', title: 'Smart Matching', desc: 'AI-powered co-founder matches' }
+                { icon: 'zap', title: 'Quick Setup', desc: 'Only 15-20 minutes' },
+                { icon: 'save', title: 'Auto-Save', desc: 'Progress saved automatically' },
+                { icon: 'users', title: 'Smart Matching', desc: 'AI-powered co-founder matches' }
             ].map(item => (
                 <div key={item.title} style={{ padding: '16px', background: 'var(--bg-tertiary)', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{item.icon}</div>
+                    <div style={{ marginBottom: '12px', color: 'var(--brand-primary)' }}>
+                        <Icon name={item.icon} size={24} />
+                    </div>
                     <div style={{ fontWeight: 600, marginBottom: '4px' }}>{item.title}</div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{item.desc}</div>
                 </div>
@@ -1559,8 +1643,10 @@ function Dashboard() {
                     <div className="card" style={{ width: '100%', maxWidth: '900px', maxHeight: '90vh', overflow: 'hidden', zIndex: 2001, display: 'flex', flexDirection: 'column', padding: 0 }}>
                         <div style={{ padding: 'var(--space-5) var(--space-8)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
                             <div>
-                                <h3 style={{ margin: 0 }}>✨ AI Generated Pitch Deck</h3>
-                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>Strategic Draft • tng/deepseek-r1t2-chimera:free</p>
+                                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Icon name="sparkles" size={24} color="var(--brand-primary)" /> AI Generated Pitch Deck
+                                </h3>
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-tertiary)', marginLeft: '32px' }}>Strategic Draft • tng/deepseek-r1t2-chimera:free</p>
                             </div>
                             <button className="btn btn-outline btn-sm" onClick={() => setCurrentDeck(null)}>Close</button>
                         </div>
@@ -1581,7 +1667,9 @@ function Dashboard() {
                             </div>
                         </div>
                         <div style={{ padding: 'var(--space-5) var(--space-8)', borderTop: '1px solid var(--border-color)', textAlign: 'right', background: 'var(--bg-secondary)' }}>
-                            <button className="btn btn-primary" onClick={() => window.print()}>🖨️ Print to PDF</button>
+                            <button className="btn btn-primary" onClick={() => window.print()} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                <Icon name="save" size={16} /> Print to PDF
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2110,7 +2198,7 @@ function MatchesTab() {
             });
             const data = await res.json();
             if (data.success) {
-                alert('🎉 Connection Request Sent! They\'ll be notified.');
+                alert('Connection Request Sent! They\'ll be notified.');
                 fetchData();
             } else {
                 alert(data.error || 'Failed to send request');
@@ -2128,7 +2216,7 @@ function MatchesTab() {
                 body: JSON.stringify({ status })
             });
             if (status === 'accepted') {
-                alert('🤝 Connection Accepted! You can now message them.');
+                alert('Connection Accepted! You can now message them.');
             }
             fetchData();
         } catch (e) {
@@ -2152,7 +2240,9 @@ function MatchesTab() {
     if (loading) {
         return (
             <div style={{ padding: 'var(--space-12)', textAlign: 'center' }}>
-                <div style={{ fontSize: '48px', marginBottom: '20px' }}>🔍</div>
+                <div style={{ marginBottom: '20px', opacity: 0.5 }}>
+                    <Icon name="target" size={64} color="var(--brand-primary)" />
+                </div>
                 <h3 style={{ marginBottom: '8px', color: 'var(--text-secondary)' }}>Finding ideal co-founders...</h3>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-tertiary)' }}>Analyzing profiles for best matches</p>
             </div>
@@ -2170,7 +2260,9 @@ function MatchesTab() {
                 </div>
 
                 <div className="card" style={{ padding: 'var(--space-8)', textAlign: 'center', background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)' }}>
-                    <div style={{ fontSize: '64px', marginBottom: '24px' }}>🔒</div>
+                    <div style={{ marginBottom: '24px', opacity: 0.6 }}>
+                        <Icon name="target" size={80} color="var(--brand-primary)" />
+                    </div>
                     <h2 style={{ marginBottom: '16px', fontSize: '1.5rem' }}>Complete Your Profile to Unlock Matches</h2>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '32px', maxWidth: '500px', margin: '0 auto 32px' }}>
                         You're {completionPercentage}% there! Complete your profile to access our intelligent co-founder matching system.
@@ -2206,7 +2298,9 @@ function MatchesTab() {
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '8px' }}>
                             {['Smart co-founder matching algorithm', 'Connection requests & networking', 'Private messaging with matches', 'Priority in search results'].map(item => (
                                 <li key={item} style={{ display: 'flex', alignItems: 'start', gap: '8px', fontSize: '0.875rem' }}>
-                                    <span style={{ color: 'var(--brand-primary)', marginTop: '2px' }}>✓</span>
+                                    <div style={{ color: 'var(--brand-primary)', marginTop: '2px' }}>
+                                        <Icon name="check" size={14} />
+                                    </div>
                                     <span>{item}</span>
                                 </li>
                             ))}
@@ -2225,7 +2319,11 @@ function MatchesTab() {
                     <h1 style={{ marginBottom: 'var(--space-2)' }}>Co-Founder Matches</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>
                         {filteredMatches.length} match{filteredMatches.length !== 1 ? 'es' : ''} found
-                        {profileData?.tier_4_complete && <span style={{ color: 'var(--brand-primary)', marginLeft: '8px' }}>✨ Premium Profile</span>}
+                        {profileData?.tier_4_complete && (
+                            <span style={{ color: 'var(--brand-primary)', marginLeft: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <Icon name="sparkles" size={12} /> Premium Profile
+                            </span>
+                        )}
                     </p>
                 </div>
                 <button
@@ -2234,7 +2332,7 @@ function MatchesTab() {
                     style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                     <Icon name="filter" size={16} />
-                    Filters {showFilters ? '▲' : '▼'}
+                    Filters
                 </button>
             </div>
 
@@ -2341,7 +2439,9 @@ function MatchesTab() {
 
             {filteredMatches.length === 0 ? (
                 <div className="card" style={{ padding: 'var(--space-12)', textAlign: 'center' }}>
-                    <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
+                    <div style={{ marginBottom: '16px', opacity: 0.3 }}>
+                        <Icon name="target" size={64} />
+                    </div>
                     <h3 style={{ marginBottom: '8px' }}>No matches found</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
                         {selectedSkill || selectedLocation ? 'Try adjusting your filters' : 'Complete more of your profile for better matches!'}
@@ -2915,9 +3015,9 @@ function IdeaCard({ idea, detailed, onViewDetails, onAnalyze, onPitchDeck }) {
                     className="btn btn-sm btn-outline"
                     onClick={handlePitchDeck}
                     disabled={generating}
-                    style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)' }}
+                    style={{ background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                    {generating ? 'Drafting...' : '✨ Pitch Deck'}
+                    {generating ? 'Drafting...' : <><Icon name="sparkles" size={14} /> Pitch Deck</>}
                 </button>
             </div>
         </div>
